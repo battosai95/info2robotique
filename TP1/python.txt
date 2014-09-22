@@ -1,0 +1,25 @@
+>>>1+2
+
+>>> greetings = "bonjour a tous"
+>>> print greetings
+
+>>> range(2)
+
+>>> range(20)
+
+>>> range(20)[3:5]
+
+>>> range(3,5)
+
+>>> for i in range(10):
+...	print i
+...	print ","
+...
+
+>>> for i in range(10):
+...     if ( i % 2 == 0 ):
+...             print i
+...     else :
+...             print "non"
+...     print "ok"
+... 

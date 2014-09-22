@@ -1,0 +1,6 @@
+Robotique
+
+Théorie
+(Contrôle)  (PID ? => contrôler accélériation du robot)
+Probabiliste
+
