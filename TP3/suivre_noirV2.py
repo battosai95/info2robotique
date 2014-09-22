@@ -16,19 +16,19 @@ flag = True
 flagRechercheNoir = True 	#Active la recherche de la ligne noir
 flagNoir = False 			#Permet de savoir si on est toujours sur la ligne noir
 
-#Lumière
-lux = nxt.sensor.Color20(b,nxt.PORT_3)	#Active les détecteurs de lumière du capteur
+#Lumiere
+lux = nxt.sensor.Color20(b,nxt.PORT_3)	#Active les detecteurs de lumiere du capteur
 lux2 = nxt.sensor.Light(b,nxt.PORT_3)
 
 ##################
 #	Fonction	 #
 ##################
 
-#permet de tourner le robot vers la droite de 45°
+#permet de tourner le robot vers la droite de 45
 def diagonalDroite( puissance, angle ) :
 	roueGauche.weak_turn( puissance, angle )
 
-#De même mais vers la gauche
+#De meme mais vers la gauche
 def diagonalGauche( puissance, angle ):
 	roueDroite.weak_turn( puissance, angle )
 
@@ -42,60 +42,74 @@ def avancer( puissance ):
 	roueDroite.run( puissance )
 	roueGauche.run( puissance )
 
-#Permet de connaître la valeur precedente et actuelle du capteur
-def ledVerte():
+#Permet de connaitre la valeur precedente et actuelle du capteur
+def ledVerte( previousValue, valeurLedVerte ):
 	previousValue = valeurLedVerte
 	valeurLedVerte = lux.get_reflected_light(nxt.sensor.Type.COLORGREEN)
-	return valeurLedVerte
+	return valeurLedVerte, previousValue
 
 #Permet de choisir la diagonale gauche ou droite
 #Le robot zigzague quand il est sur la ligne
-def choisirDiagonale( puissance, angle ):
+def choisirDiagonale( puissance, angle, flag ):
 	if ( flag ):
 		diagonalDroite( puissance, angle )
 	else:
 		diagonalGauche( puissance, angle )
 	flag = not flag
+	return flag
 
 #On pense avoir trouver la ligne
-def ligneNoirTrouve():
+def ligneNoirTrouve( valeurLedVerte, previousValue, flag ):
 	stop()					#on arrete le robot
-	flagNoir = True 		#on prépare une boucle
+	sleep( 1 )
+	flagNoir = True 		#on prepare une boucle
 	debut = time.time()		#on enregistre le temps actuel
-	avancer( 70 )			#Le robot avance doucement
+	avancer( 60 )			#Le robot avance doucement
 
 	while flagNoir == True:
 		#tant qu'il ne sort pas de la ligne et qu'il y reste pendant 2secondes
 		#alors on est sur que c'est la ligne
-		if ( ledVerte() > 40 && ( ( time.time() - debut ) > 2 ) :	
-			choisirDiagonale( 100, 90 )	#permet de choisir la diagonale
+		valeurLedVerte, previousValue = ledVerte( valeurLedVerte, previousValue )
+		if ( valeurLedVerte > 200 and ( ( time.time() - debut ) > 1 ) ):	
+			flag = choisirDiagonale( 100, 90 )	#permet de choisir la diagonale
 			flagNoir = False
+	return flag
+
+def terminer():
+	roueGauche.run(0)
+	roueDroite.run(0)
+	lux.get_reflected_light(nxt.sensor.Type.COLORNONE)
+	exit(0)
 
 ##################
 #		MAIN	 #
 ##################
+try:
+	valeurLedVerte = lux.get_reflected_light(nxt.sensor.Type.COLORGREEN)
+	previousValue = valeurLedVerte
+	flag = choisirDiagonale( 100, 90, flag )
 
-valeurLedVerte = lux.get_reflected_light(nxt.sensor.Type.COLORGREEN)
-choisirDiagonale( 100, 45 )
+	while True:
+		avancer( 60 )
+		valeurLedVerte, previousValue = ledVerte( valeurLedVerte, previousValue )
 
-while True:
-	avancer( 70 )
-	ledVerte()
+		print valeurLedVerte
+		
+		if ( valeurLedVerte > 200 ):
+			if ( previousValue < 200 ):
+				flag = choisirDiagonale( 100, 90, flag )
 
-	print valeurLedVerte
-	
-	if ( valeurLedVerte > 40 ):
-		if ( previousValue < 40 ):
-			choisirDiagonale( 100, 45 )
+			else:
+				while ( flagRechercheNoir ):
+					valeurLedVerte, previousValue = ledVerte( valeurLedVerte, previousValue )
+					if ( valeurLedVerte < 200 ):
+						flag = ligneNoirTrouve( valeurLedVerte, previousValue )
+						flagRechercheNoir = False
 
-		else:
-			while ( flagRechercheNoir ):
-
-				if ( ledVerte() < 40 ):
-					ligneNoirTrouve()
-					flagRechercheNoir = False
-
-			flagRechercheNoir = True
+				flagRechercheNoir = True
+	terminer()
+except KeyboardInterrupt:
+	terminer()
 #################################################################
 #CAPTEUR LUMIERE
 #lux = nxt.sensor.Color20(b,nxt.PORT_3)
