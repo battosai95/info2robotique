@@ -29,9 +29,15 @@ def telemetry(T,boxelist):
     #print intr
     return None if intr==[] else (min(intr)+np.random.normal(0,10))
 
+'''
+permet de tourner de 10deg par rapport à l'angle actuel
+'''
 def tourner(t, angle):
     t.setheading(t.heading()+angle)
 
+'''
+prend les valeurs tout les 10 deg et dessine les angles
+'''
 def prendreMesure(T, V):
     liste = range(37)
     
@@ -42,14 +48,18 @@ def prendreMesure(T, V):
         V.fd(distance)
         tourner(V, 180)
         print str( i*10 ) + " " + str( distance )
+
+        #Toutes valeurs plus grande que 196 sont considere comme etant l infini
         if ( distance >= 197 ):
              distance = 500
         liste[i] = distance
-        # i += 1
         tourner(T, 10)
         tourner(V, 10)
     return liste
 
+'''
+la plus longue suite de 500 correspond au plus grand vide detecte
+'''
 def compte500(liste):
     indiceMax500 = 0
     indice500 = 0
@@ -70,6 +80,17 @@ def compte500(liste):
     # return (indiceMax500 + cptMax500)/2
     return indiceMax500
 
+'''
+permet de choisir la direction de la solution 
+en connaissant son angle et celui de la solution
+'''
+def angleSolution( angleTurtle, angleSolution, T ):
+    if ( angleSolution < angleTurtle ):
+        angleTurtle = angleTurtle - angleSolution
+        T.right(angleTurtle)
+    elif ( angleSolution > angleTurtle ):
+        angleTurtle = angleTurtle + angleSolution
+        T.left(angleTurtle)
 
 ######### main ########
 turtle.clearscreen()
@@ -77,30 +98,32 @@ T = turtle.Turtle()
 T.penup()
 T.tracer(2, 1)
 
+#construction obstacle
 boxelist = [ new_box(0,0,400) ]
 boxelist = boxelist +[ new_box(150*cos(1+i*2*pi/15),150*sin(1+i*2*pi/15),random.randint(10,40)) for i in range(12)]
 
+#La tortue à un angle d'origine aléatoire
+#La tortue V permet de dessiner les angles
 V = turtle.Turtle()
 T.setheading( random.randint( 0, 359 ) )
 V.setheading( T.heading() )
 
-# print telemetry(T,boxelist)
-
+#prise des valeurs et dessiner les angles
 liste = prendreMesure(T, V)
 
+#On colorie la sortie
 T.pendown()
 T.color(random.random(), random.random(), random.random())
+
+#Choix de l'angle de sortie
 heading = compte500(liste)*10
-print heading
-# tourner(T, heading )
-T.setheading(compte500(liste)*10)
+angleSolution( T.heading(), heading, T)
+
+#sortie
 T.forward(0)
 T.forward(150)
 
 # plt.plot( liste )
 # plt.show()
-
-
-
 
 raw_input()
