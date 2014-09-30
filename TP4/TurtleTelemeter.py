@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+#INFO2 FAIT PAR 
+# UNG Brondon - Dahiorus
+# CHEAM Tony - TonyCheam
+# BOUJU Tristan - battosai95
 """
 Telemetry
 """
@@ -39,58 +43,57 @@ def tourner(t, angle):
 prend les valeurs tout les 10 deg et dessine les angles
 '''
 def prendreMesure(T, V):
-    liste = range(37)
+
+    liste = range(72)
     
-    for i in range(37):
+    for i in range(72):
         distance = telemetry(T,boxelist)
         V.fd(distance)
         tourner(V, 180)
         V.fd(distance)
         tourner(V, 180)
-        print str( i*10 ) + " " + str( distance )
+        print str( i ) + " " + str( T.heading() ) + " " + str( distance )
 
         #Toutes valeurs plus grande que 196 sont considere comme etant l infini
-        if ( distance >= 197 ):
-             distance = 500
+        if ( distance >= 197 and distance <= 296 ):
+            distance = 500
+        elif ( distance > 300 ):
+            distance = 1000
         liste[i] = distance
-        tourner(T, 10)
-        tourner(V, 10)
+        tourner(T, 5)
+        tourner(V, 5)
     return liste
 
 '''
-la plus longue suite de 500 correspond au plus grand vide detecte
+la plus longue suite de l occur correspond au plus grand vide detecte
 '''
-def compte500(liste):
-    indiceMax500 = 0
-    indice500 = 0
-    cptMax500 = 0
-    cpt500 = 0
-    flag = False
+# compte le nombre de mesures contigues menant a une sortie (i.e. >= mesure_max)
+# renvoie le debut et la fin de l'intervalle de sortie
+def calcul_sortie(liste, mesure_max, long_inter):
+    nb_mesures = 0
+    i = 0
 
-    for i in range(37):
-        if ( liste[i] == 500 ):
-            if ( flag == False ):
-                flag = not flag
-                indice500 = i
-            cpt500 += 1
+    while ( i < 2 * len(liste) ):
+        if liste[ i%len(liste) ] >= mesure_max:
+            nb_mesures += 1
         else:
-            if ( cpt500 > cptMax500 ):
-                indiceMax500 = indice500
-                cptMax500 = cpt500
-    # return (indiceMax500 + cptMax500)/2
-    return indiceMax500
+            if nb_mesures >= long_inter:
+                return i%len(liste) - nb_mesures, i%len(liste) 
+            nb_mesures = 0
+        i += 1
+    return -1, -1
 
 '''
 permet de choisir la direction de la solution 
 en connaissant son angle et celui de la solution
 '''
 def angleSolution( angleTurtle, angleSolution, T ):
-    if ( angleSolution < angleTurtle ):
-        angleTurtle = angleTurtle - angleSolution
-        T.right(angleTurtle)
-    elif ( angleSolution > angleTurtle ):
-        angleTurtle = angleTurtle + angleSolution
-        T.left(angleTurtle)
+    print angleTurtle
+    print angleSolution
+
+    print "left"
+    #angleTurtle = angleTurtle + angleSolution
+    T.left(angleSolution)
 
 ######### main ########
 turtle.clearscreen()
@@ -99,8 +102,10 @@ T.penup()
 T.tracer(2, 1)
 
 #construction obstacle
-boxelist = [ new_box(0,0,400) ]
+boxelist = [ new_box(0,0,600) ]
 boxelist = boxelist +[ new_box(150*cos(1+i*2*pi/15),150*sin(1+i*2*pi/15),random.randint(10,40)) for i in range(12)]
+
+boxelist = boxelist +[ new_box(250*cos(1+i*2*pi/25),250*sin(1+i*2*pi/25),random.randint(10,40)) for i in range(24)]
 
 #La tortue à un angle d'origine aléatoire
 #La tortue V permet de dessiner les angles
@@ -108,22 +113,35 @@ V = turtle.Turtle()
 T.setheading( random.randint( 0, 359 ) )
 V.setheading( T.heading() )
 
+V.pencolor("red")
+V.fd(300)
+tourner(V, 180)
+V.fd(300)
+tourner(V, 180)
+
+V.pencolor("black")
+
+
 #prise des valeurs et dessiner les angles
 liste = prendreMesure(T, V)
 
 #On colorie la sortie
 T.pendown()
-T.color(random.random(), random.random(), random.random())
+T.pencolor("blue")
 
 #Choix de l'angle de sortie
-heading = compte500(liste)*10
-angleSolution( T.heading(), heading, T)
+#heading = compteOccurMax(liste, 1000)
+debut, sortie = calcul_sortie(liste, 1000, 3)
 
-#sortie
-T.forward(0)
-T.forward(150)
+if ( debut == -1 and sortie == -1 ):
+    print "pas de sortie"
+else:
+    heading = (sortie+debut)/2
 
-# plt.plot( liste )
-# plt.show()
+    #le tableau est de taille 74 et 
+    angleSolution( T.heading(), heading*5, T)
 
+    #sortie
+    T.forward(0)
+    T.forward( 300 )
 raw_input()
